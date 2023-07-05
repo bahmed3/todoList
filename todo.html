@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Todo List</title>
+    <link rel="stylesheet" href="todo.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>Your Trusty To-Do List</h1>
+
+      <div class="todo-input-grid">
+        <input placeholder="Add an item..." class="js-name-input name-input">
+        <input type="date" class="js-due-date-input due-date-input">
+        <button onclick="addTodo();" class="add-todo-button">Add</button>
+      </div>
+
+      <div class="js-todo-list todo-grid"></div>
+    </div>
+
+    <script>
+     const todoList = JSON.parse(localStorage.getItem('todoList')) || [];
+    renderTodoList();
+
+    function renderTodoList() {
+      let todoListHTML = '';
+
+      todoList.forEach(function(todoObject, index){
+        const { name, dueDate, isDone } = todoObject;
+        const html = `
+          <div class="todo-item ${isDone ? 'done' : ''}">
+            <input type="checkbox" ${isDone ? 'checked' : ''} onclick="toggleDone(${index})">
+            <div class="js-todo-name" data-index="${index}">${name}</div>
+            <div class="js-todo-date" data-index="${index}">${dueDate}</div>
+            <button onclick="editTodo(${index})" data-index="${index}" class="edit-todo-button">Edit</button>
+            <button onclick="deleteTodo(${index})" class="delete-todo-button">Delete</button> 
+          </div>
+        `;
+        todoListHTML += html;
+      });
+
+      document.querySelector('.js-todo-list')
+        .innerHTML = todoListHTML;
+    }
+
+    function addTodo() {
+      const inputElement = document.querySelector('.js-name-input');
+      const name = inputElement.value;
+
+      const dateInputElement = document.querySelector('.js-due-date-input');
+      const dueDate = dateInputElement.value;
+
+      todoList.push({
+        name,
+        dueDate,
+        isDone: false  // new task is not done
+      });
+
+      inputElement.value = '';
+
+      localStorage.setItem('todoList', JSON.stringify(todoList));
+
+      renderTodoList();
+    }
+
+    function deleteTodo(index) {
+      todoList.splice(index, 1);
+
+      localStorage.setItem('todoList', JSON.stringify(todoList));
+
+      renderTodoList();
+    }
+
+    function toggleDone(index) {
+      const task = todoList[index];
+      task.isDone = !task.isDone;
+
+      // Sort tasks, moving completed ones to the top
+      todoList.sort((a, b) => (a.isDone === b.isDone ? 0 : a.isDone ? -1 : 1));
+
+      localStorage.setItem('todoList', JSON.stringify(todoList));
+
+      renderTodoList();
+    }
+
+    function editTodo(index) {
+      const todoItem = document.querySelector(`[data-index="${index}"].js-todo-name`);
+      const todoDate = document.querySelector(`[data-index="${index}"].js-todo-date`);
+
+      const name = todoItem.innerText;
+      const date = todoDate.innerText;
+
+      todoItem.innerHTML = `<input type="text" id="edit-name" value="${name}">`;
+      todoDate.innerHTML = `<input type="date" id="edit-date" value="${date}">`;
+
+      document.querySelector(`.edit-todo-button[data-index="${index}"]`).outerHTML = `
+        <button onclick="saveEdit(${index})" class="save-edit-button">Save</button>
+      `;
+    }
+
+    function saveEdit(index) {
+      const newName = document.getElementById('edit-name').value;
+      const newDate = document.getElementById('edit-date').value;
+
+      todoList[index].name = newName;
+      todoList[index].dueDate = newDate;
+
+      localStorage.setItem('todoList', JSON.stringify(todoList));
+
+      renderTodoList();
+    }
+
+    </script>
+  
+  </body>
+</html>
